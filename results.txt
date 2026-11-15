@@ -1,0 +1,76 @@
+Corpus: 293 documents, 30584 tokens, 6692 unique words
+
+============================================================ 
+PART A1 - Bag of Words
+BoW shape (docs x vocab): (293, 6692)
+BoW sparsity: 98.81% zeros
+
+PART A2 - TF-IDF
+TF-IDF shape: (293, 6692) | sparsity 98.81%
+Example document #0: hundreds people forced vacate homes southern highlands new south wales strong winds today pushed huge bushfire town hill new blaze near goulburn south west sydney forced closure hume highway aedt mark
+HIGH weight words in this doc: [('new', np.float64(0.242), 'idf=2.09'), ('south', np.float64(0.212), 'idf=2.45'), ('rain', np.float64(0.205), 'idf=4.74'), ('wales', np.float64(0.192), 'idf=3.32'), ('hill', np.float64(0.19), 'idf=4.38')]
+LOW weight words in this doc : [('said', np.float64(0.02), 'idf=1.37'), ('year', np.float64(0.033), 'idf=2.29'), ('today', np.float64(0.038), 'idf=2.61'), ('state', np.float64(0.044), 'idf=3.07'), ('called', np.float64(0.045), 'idf=3.10')]
+Lowest-IDF words in the whole corpus (appear in most docs): [('said', 'idf=1.37'), ('says', 'idf=1.51'), ('new', 'idf=2.09'), ('people', 'idf=2.15'), ('australian', 'idf=2.19')]
+Reason: IDF = ln((1+N)/(1+df)) + 1 is small when a word occurs in many documents, so its TF-IDF weight shrinks; rare, document-specific words get large IDF and high weight.
+
+PART A3 - N-grams (ngram_range = (1,n))
+ n  features  sparsity_%
+ 1      6692      98.813
+ 2     32115      99.443
+ 3     60606      99.537
+Comment: features grow sharply with n and the matrix gets sparser (most bigrams/trigrams occur once).
+
+PART A4 - Hand-worked check on a toy sub-sample
+Toy docs: ['the cat sat on the mat', 'the dog sat on the log', 'the cat chased the dog']
+term='cat', doc 0: tf=1, df=2, N=3
+idf = ln((1+3)/(1+2)) + 1 = 1.2877  -> raw tf-idf = 1 * 1.2877 = 1.2877
+L2 norm of doc vector = 3.4411; final weight = 1.2877/3.4411 = 0.3742
+Library value: 0.3742
+Bigram 'the cat': manual count across toy corpus = 2; library count = 2
+
+============================================================ 
+PART B - Learned embeddings
+Hyperparameters (same for all): {'vector_size': 100, 'window': 5, 'min_count': 2, 'epochs': 50, 'seed': 42, 'workers': 1}
+Vocab sizes (min_count=2): CBOW 3667 | Skip-gram 3667 | fastText 3667
+
+B4 - OOV / misspelled word demo
+Query word: 'goverment'  | in Word2Vec vocab? False | in fastText vocab? False
+Word2Vec: KeyError -> "Key 'goverment' not present"
+fastText neighbours: [('government', 0.881), ('governments', 0.783), ('clement', 0.75), ('govern', 0.746), ('segment', 0.743)]
+
+============================================================ 
+PART C1 - Nearest neighbours
+[CBOW] palestinian: [('offices', 0.955), ('bus', 0.954), ('gunships', 0.947), ('rocket', 0.943), ('blockade', 0.939)]
+[Skip-gram] palestinian: [('blockade', 0.685), ('yasser', 0.684), ('bus', 0.677), ('spiritual', 0.675), ('nabil', 0.669)]
+[fastText] palestinian: [('palestinians', 0.947), ('israelis', 0.747), ('israel', 0.717), ('israeli', 0.715), ('hebron', 0.712)]
+[CBOW] afghanistan: [('operation', 0.917), ('fighting', 0.912), ('prisoner', 0.896), ('taliban', 0.896), ('ship', 0.895)]
+[Skip-gram] afghanistan: [('peacekeeping', 0.555), ('alongside', 0.548), ('fugitive', 0.536), ('marines', 0.532), ('fate', 0.531)]
+[fastText] afghanistan: [('afghan', 0.857), ('afghans', 0.82), ('pakistan', 0.643), ('dagestan', 0.643), ('hilltops', 0.605)]
+[CBOW] police: [('protesters', 0.82), ('bombed', 0.799), ('additional', 0.797), ('teenagers', 0.796), ('officers', 0.793)]
+[Skip-gram] police: [('policeman', 0.561), ('protesters', 0.555), ('partially', 0.524), ('rubble', 0.509), ('interviewed', 0.504)]
+[fastText] police: [('policeman', 0.883), ('policemen', 0.877), ('policies', 0.756), ('alice', 0.745), ('policy', 0.722)]
+[CBOW] government: [('federal', 0.837), ('established', 0.833), ('interim', 0.827), ('elections', 0.826), ('installed', 0.822)]
+[Skip-gram] government: [('interim', 0.453), ('lew', 0.452), ('negotiation', 0.449), ('programs', 0.437), ('transitional', 0.421)]
+[fastText] government: [('governments', 0.913), ('govern', 0.823), ('environment', 0.654), ('governance', 0.652), ('governor', 0.648)]
+[CBOW] security: [('debating', 0.836), ('personnel', 0.835), ('key', 0.816), ('tight', 0.791), ('missiles', 0.791)]
+[Skip-gram] security: [('guards', 0.5), ('debating', 0.492), ('urgent', 0.471), ('personnel', 0.47), ('nablus', 0.467)]
+[fastText] security: [('secure', 0.822), ('securities', 0.76), ('authority', 0.599), ('majority', 0.553), ('sect', 0.543)]
+
+PART C2 - Cosine similarities
+[CBOW] expected SIMILAR ['palestinian', 'israeli']: 0.909
+[Skip-gram] expected SIMILAR ['palestinian', 'israeli']: 0.638
+[fastText] expected SIMILAR ['palestinian', 'israeli']: 0.715
+[CBOW] expected UNRELATED ['taliban', 'bank']: -0.123
+[Skip-gram] expected UNRELATED ['taliban', 'bank']: 0.136
+[fastText] expected UNRELATED ['taliban', 'bank']: 0.265
+
+PART C3 - Analogy  a - b + c
+[CBOW] arafat - palestinian + taliban -> [('tribal', 0.88), ('pashtun', 0.869), ('karzai', 0.861)]
+[Skip-gram] arafat - palestinian + taliban -> [('elders', 0.52), ('alongside', 0.511), ('pashtun', 0.506)]
+[fastText] arafat - palestinian + taliban -> [('alongside', 0.622), ('arab', 0.578), ('arabs', 0.569)]
+
+PART C4 - Count-based vs learned (numbers)
+TF-IDF dims: 6692, sparse (98.8% zeros), OOV words ignored.
+Embedding dims: 100, dense, Word2Vec cannot handle OOV; fastText can (sub-words).
+
+PART D1 - saved models to: models ['cbow.model', 'fasttext.model', 'skipgram.model', 'tfidf.joblib']
